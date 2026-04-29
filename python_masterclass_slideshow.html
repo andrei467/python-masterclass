@@ -1,0 +1,2366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learn Python 3 — Interactive Masterclass</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Clash+Display:wght@400;500;600;700&family=Cabinet+Grotesk:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ── */
+:root {
+  --bg: #08080f;
+  --surface: #0f0f1a;
+  --surface2: #161625;
+  --border: #1f1f35;
+  --border2: #2a2a45;
+  --text: #e6e6f0;
+  --muted: #4a4a70;
+  --muted2: #6a6a90;
+  --code-bg: #060610;
+
+  /* chapter accent colours */
+  --c1: #f5c542; /* Hello World   – amber   */
+  --c2: #ff6b6b; /* Control Flow  – coral   */
+  --c3: #4eebb5; /* Lists         – mint    */
+  --c4: #a78bfa; /* Loops         – violet  */
+  --c5: #38bdf8; /* Functions     – sky     */
+  --c6: #facc15; /* Strings       – yellow  */
+
+  --accent: var(--c1);
+  --green: #4ade80;
+  --orange: #fb923c;
+  --purple: #c084fc;
+}
+
+/* ── RESET ── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--text); }
+
+/* ── GRID BACKGROUND ── */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size:56px 56px;
+  pointer-events:none; z-index:0;
+}
+
+/* ── FONTS ── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+/* ── CHAPTER COLOUR HELPER ── */
+.ch-0 { --accent:var(--c1); }
+.ch-1 { --accent:var(--c2); }
+.ch-2 { --accent:var(--c3); }
+.ch-3 { --accent:var(--c4); }
+.ch-4 { --accent:var(--c5); }
+.ch-5 { --accent:var(--c6); }
+
+/* ══════════════════════════════════
+   TOP HUD
+══════════════════════════════════ */
+#hud {
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  height:52px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 28px;
+  background:rgba(8,8,15,.85);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.hud-chapters {
+  display:flex; gap:6px;
+}
+.hud-ch {
+  font-family:'DM Mono',monospace;
+  font-size:10px; letter-spacing:1px;
+  padding:4px 12px; border-radius:100px;
+  border:1px solid var(--border2);
+  color:var(--muted2); background:transparent; cursor:pointer;
+  transition:all .2s;
+}
+.hud-ch:hover { border-color:var(--accent); color:var(--accent); }
+.hud-ch.active {
+  background:var(--accent);
+  border-color:var(--accent);
+  color:#000; font-weight:500;
+}
+.hud-pos {
+  font-family:'DM Mono',monospace; font-size:11px; color:var(--muted2);
+  display:flex; gap:16px; align-items:center;
+}
+.hud-pos .sep { color:var(--border2); }
+#hud-slide-info { color:var(--text); }
+
+/* ══════════════════════════════════
+   DECK & SLIDES
+══════════════════════════════════ */
+#deck {
+  position:fixed; inset:0;
+  padding-top:52px;
+  z-index:1;
+}
+
+/* Each chapter = column; each slide = row */
+.chapter {
+  position:absolute; inset:52px 0 0 0;
+  display:none;
+}
+.chapter.visible { display:block; }
+
+.slide {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
+  padding:36px 72px 80px;
+  opacity:0; pointer-events:none;
+  transform:translateY(40px);
+  transition:opacity .45s cubic-bezier(.4,0,.2,1), transform .45s cubic-bezier(.4,0,.2,1);
+}
+.slide.active {
+  opacity:1; pointer-events:all;
+  transform:translateY(0);
+}
+.slide.exit-up   { opacity:0; transform:translateY(-40px); transition:opacity .3s ease, transform .3s ease; }
+.slide.exit-down { opacity:0; transform:translateY(40px);  transition:opacity .3s ease, transform .3s ease; }
+
+.slide-inner {
+  width:100%; max-width:900px;
+  position:relative;
+}
+
+/* ══════════════════════════════════
+   TYPOGRAPHY WITHIN SLIDES
+══════════════════════════════════ */
+.tag-row {
+  display:flex; align-items:center; gap:10px;
+  margin-bottom:16px;
+}
+.ch-tag {
+  font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px;
+  padding:3px 10px; border-radius:4px;
+  background:rgba(255,255,255,.05);
+  border:1px solid var(--border2); color:var(--muted2);
+}
+.slide-tag {
+  font-family:'DM Mono',monospace; font-size:10px; letter-spacing:2px;
+  color:var(--accent);
+  background:color-mix(in srgb, var(--accent) 12%, transparent);
+  border:1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  padding:3px 10px; border-radius:4px;
+}
+
+h1.slide-title {
+  font-family:'Cabinet Grotesk','Space Grotesk',sans-serif;
+  font-weight:900; font-size:clamp(2rem,5vw,3.8rem);
+  line-height:1.04; letter-spacing:-2px;
+  color:var(--text); margin-bottom:18px;
+}
+h1.slide-title .hl { color:var(--accent); }
+
+h2.slide-h2 {
+  font-family:'Cabinet Grotesk','Space Grotesk',sans-serif;
+  font-weight:800; font-size:clamp(1.5rem,3.5vw,2.4rem);
+  line-height:1.1; letter-spacing:-1px;
+  color:var(--text); margin-bottom:14px;
+}
+h2.slide-h2 .hl  { color:var(--accent); }
+h2.slide-h2 .hl2 { color:#4eebb5; }
+
+.desc {
+  font-family:'DM Mono',monospace; font-weight:300;
+  font-size:.84rem; color:#8080a8; line-height:1.85;
+  margin-bottom:20px; max-width:700px;
+}
+.desc strong { color:color-mix(in srgb, var(--accent) 90%, white); font-weight:500; }
+.desc code {
+  font-family:'DM Mono',monospace; font-size:.82rem;
+  color:var(--accent);
+  background:color-mix(in srgb, var(--accent) 10%, transparent);
+  padding:1px 6px; border-radius:3px;
+}
+
+/* ══════════════════════════════════
+   TWO-COLUMN LAYOUT
+══════════════════════════════════ */
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; width:100%; }
+.three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:16px; width:100%; }
+
+/* ══════════════════════════════════
+   CODE BLOCKS
+══════════════════════════════════ */
+.code-wrap {
+  background:var(--code-bg); border:1px solid var(--border);
+  border-radius:10px; overflow:hidden; margin-bottom:14px; width:100%;
+}
+.code-top {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:7px 14px; border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,.02);
+}
+.code-dots { display:flex; gap:5px; }
+.code-dots span { width:9px; height:9px; border-radius:50%; }
+.code-dots span:nth-child(1){background:#ff5f57;}
+.code-dots span:nth-child(2){background:#febc2e;}
+.code-dots span:nth-child(3){background:#28c840;}
+.code-label {
+  font-family:'DM Mono',monospace; font-size:9px;
+  letter-spacing:2px; color:var(--muted);
+}
+.copy-btn {
+  font-family:'DM Mono',monospace; font-size:9px;
+  color:var(--muted); background:none;
+  border:1px solid var(--border); padding:2px 9px;
+  border-radius:3px; cursor:pointer; transition:all .2s;
+}
+.copy-btn:hover { border-color:var(--accent); color:var(--accent); }
+.copy-btn.ok    { border-color:var(--green);  color:var(--green);  }
+pre {
+  padding:16px 18px;
+  font-family:'DM Mono',monospace; font-size:.78rem;
+  line-height:1.9; overflow-x:auto; color:var(--text);
+}
+/* syntax colours */
+.kw  { color:#c084fc; }
+.fn  { color:#7dd3fc; }
+.str { color:#86efac; }
+.num { color:#fb923c; }
+.cm  { color:#334155; font-style:italic; }
+.op  { color:#f87171; }
+.bool{ color:#f59e0b; }
+
+/* ══════════════════════════════════
+   REVEAL LIST
+══════════════════════════════════ */
+.reveal-list { list-style:none; display:flex; flex-direction:column; gap:8px; margin-bottom:16px; width:100%; }
+.reveal-item {
+  font-family:'DM Mono',monospace; font-size:.81rem; font-weight:300;
+  color:#8080a8; padding:11px 16px;
+  border:1px solid var(--border); border-radius:8px;
+  background:rgba(255,255,255,.015);
+  display:flex; align-items:flex-start; gap:12px;
+  opacity:0; transform:translateY(10px);
+  transition:opacity .4s ease, transform .4s ease;
+  line-height:1.65;
+}
+.reveal-item.shown { opacity:1; transform:translateY(0); }
+.reveal-item .bull { color:var(--accent); font-weight:500; flex-shrink:0; margin-top:1px; }
+.reveal-item code  { color:color-mix(in srgb,var(--accent) 80%,white); background:color-mix(in srgb,var(--accent) 10%,transparent); padding:1px 5px; border-radius:3px; font-size:.79rem; }
+.reveal-item strong{ color:var(--text); }
+
+/* ══════════════════════════════════
+   PLAYGROUND
+══════════════════════════════════ */
+.pg-wrap {
+  border:1px solid var(--border); border-radius:10px;
+  overflow:hidden; background:var(--code-bg); width:100%;
+}
+.pg-head {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:7px 14px; border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,.02);
+}
+.pg-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--accent); }
+.run-btn {
+  font-family:'DM Mono',monospace; font-size:10px; font-weight:500;
+  color:#000; background:var(--accent);
+  border:none; padding:4px 16px; border-radius:4px;
+  cursor:pointer; transition:all .15s; letter-spacing:.5px;
+}
+.run-btn:hover { filter:brightness(1.1); transform:scale(1.03); }
+.run-btn:active{ transform:scale(.97); }
+.pg-in {
+  width:100%; background:transparent; border:none; outline:none;
+  padding:12px 16px;
+  font-family:'DM Mono',monospace; font-size:.77rem; font-weight:300;
+  color:var(--text); line-height:1.85; resize:none; min-height:76px;
+  border-bottom:1px solid var(--border);
+}
+.pg-out {
+  padding:10px 16px; min-height:38px;
+  font-family:'DM Mono',monospace; font-size:.77rem;
+  color:#4eebb5; line-height:1.85; white-space:pre-wrap;
+  background:rgba(78,235,181,.02);
+}
+.pg-out.ph  { color:var(--muted); font-style:italic; }
+.pg-out.err { color:#f87171; }
+
+/* ══════════════════════════════════
+   QUIZ
+══════════════════════════════════ */
+.quiz-wrap {
+  border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);
+  border-radius:10px; overflow:hidden;
+  background:color-mix(in srgb,var(--accent) 4%,transparent);
+  width:100%;
+}
+.quiz-head {
+  padding:8px 16px; border-bottom:1px solid color-mix(in srgb,var(--accent) 20%,transparent);
+  font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; color:var(--accent);
+}
+.quiz-body { padding:14px 16px; }
+.quiz-q {
+  font-family:'DM Mono',monospace; font-size:.81rem; font-weight:300;
+  color:var(--text); margin-bottom:10px; line-height:1.65;
+}
+.quiz-q code { color:color-mix(in srgb,var(--accent) 80%,white); background:color-mix(in srgb,var(--accent) 10%,transparent); padding:1px 5px; border-radius:3px; }
+.quiz-opts { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.qopt {
+  padding:8px 12px; border:1px solid var(--border); border-radius:6px;
+  cursor:pointer; font-family:'DM Mono',monospace; font-size:.75rem; font-weight:300;
+  color:var(--muted2); background:var(--surface); text-align:left;
+  transition:all .18s; line-height:1.5;
+}
+.qopt:hover:not(:disabled) { border-color:var(--accent); color:var(--text); }
+.qopt.correct { border-color:var(--green); color:var(--green); background:rgba(74,222,128,.07); }
+.qopt.wrong   { border-color:#f87171;      color:#f87171;      background:rgba(248,113,113,.07); }
+.quiz-fb {
+  margin-top:9px; font-family:'DM Mono',monospace; font-size:.76rem; min-height:16px;
+}
+.quiz-fb.ok  { color:var(--green); }
+.quiz-fb.bad { color:#f87171; }
+
+/* ══════════════════════════════════
+   TIP / INFO BOX
+══════════════════════════════════ */
+.tip {
+  border-left:3px solid var(--accent);
+  background:color-mix(in srgb,var(--accent) 5%,transparent);
+  padding:10px 14px; border-radius:0 7px 7px 0;
+  font-family:'DM Mono',monospace; font-size:.78rem; font-weight:300;
+  color:color-mix(in srgb,var(--accent) 60%,#aaa);
+  line-height:1.7; margin-bottom:14px; width:100%;
+}
+.tip strong { color:var(--accent); }
+
+/* ══════════════════════════════════
+   CHAPTER TITLE SLIDE BIG LETTER
+══════════════════════════════════ */
+.big-bg {
+  position:absolute; right:-4vw; top:50%; transform:translateY(-50%);
+  font-family:'Cabinet Grotesk',sans-serif; font-weight:900;
+  font-size:28vw; line-height:1;
+  color:color-mix(in srgb,var(--accent) 6%,transparent);
+  pointer-events:none; user-select:none; z-index:0;
+}
+
+/* ══════════════════════════════════
+   COMPLETION CARD
+══════════════════════════════════ */
+.complete-card {
+  border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
+  border-radius:12px; padding:20px 24px;
+  background:color-mix(in srgb,var(--accent) 5%,transparent);
+  text-align:center; width:100%;
+}
+.complete-card .emoji { font-size:2rem; margin-bottom:10px; }
+.complete-card h3 {
+  font-family:'Cabinet Grotesk',sans-serif; font-weight:800;
+  font-size:1.3rem; color:var(--accent); margin-bottom:6px;
+}
+.complete-card p {
+  font-family:'DM Mono',monospace; font-size:.78rem;
+  color:var(--muted2); font-weight:300; line-height:1.6;
+}
+
+/* ══════════════════════════════════
+   BOTTOM NAV
+══════════════════════════════════ */
+#nav {
+  position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
+  z-index:300;
+  display:flex; align-items:center; gap:14px;
+  background:rgba(15,15,26,.88); backdrop-filter:blur(16px);
+  border:1px solid var(--border2); border-radius:100px;
+  padding:9px 20px;
+}
+.nav-btn {
+  width:34px; height:34px; border-radius:50%;
+  border:1px solid var(--border2); background:transparent;
+  color:var(--muted2); cursor:pointer; font-size:14px;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .2s; flex-shrink:0;
+}
+.nav-btn:hover:not(:disabled) {
+  border-color:var(--accent); color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 10%,transparent);
+}
+.nav-btn:disabled { opacity:.25; cursor:default; }
+.nav-divider { width:1px; height:24px; background:var(--border2); }
+.nav-label {
+  font-family:'DM Mono',monospace; font-size:10px; color:var(--muted2);
+  letter-spacing:.5px; white-space:nowrap;
+}
+.nav-label .cur { color:var(--accent); font-weight:500; }
+
+/* ══════════════════════════════════
+   RIGHT SIDE DOTS
+══════════════════════════════════ */
+#side-dots {
+  position:fixed; right:22px; top:50%; transform:translateY(-50%);
+  display:flex; flex-direction:column; gap:7px; z-index:200;
+}
+.sdot {
+  width:5px; height:5px; border-radius:50%;
+  background:var(--border2); cursor:pointer; transition:all .25s;
+}
+.sdot.active { background:var(--accent); transform:scale(1.6); }
+.sdot:hover  { background:var(--muted2); }
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* chapter colour patch per chapter */
+.chapter[data-ch="0"] { --accent:var(--c1); }
+.chapter[data-ch="1"] { --accent:var(--c2); }
+.chapter[data-ch="2"] { --accent:var(--c3); }
+.chapter[data-ch="3"] { --accent:var(--c4); }
+.chapter[data-ch="4"] { --accent:var(--c5); }
+.chapter[data-ch="5"] { --accent:var(--c6); }
+</style>
+</head>
+<body>
+
+<!-- ══ HUD ══ -->
+<div id="hud">
+  <div class="hud-chapters">
+    <button class="hud-ch active" data-ch="0" onclick="jumpChapter(0)">01 Hello World</button>
+    <button class="hud-ch" data-ch="1" onclick="jumpChapter(1)">02 Control Flow</button>
+    <button class="hud-ch" data-ch="2" onclick="jumpChapter(2)">03 Lists</button>
+    <button class="hud-ch" data-ch="3" onclick="jumpChapter(3)">04 Loops</button>
+    <button class="hud-ch" data-ch="4" onclick="jumpChapter(4)">05 Functions</button>
+    <button class="hud-ch" data-ch="5" onclick="jumpChapter(5)">06 Strings</button>
+  </div>
+  <div class="hud-pos">
+    <span id="hud-slide-info">Slide 1</span>
+    <span class="sep">|</span>
+    <span>← → chapters &nbsp; ↑ ↓ slides</span>
+  </div>
+</div>
+
+<div id="deck">
+
+<!-- ══════════════════════════════════════════════════════
+     CHAPTER 1 — HELLO WORLD
+══════════════════════════════════════════════════════ -->
+<div class="chapter visible" data-ch="0" id="ch-0">
+
+  <!-- Slide 0: Title -->
+  <div class="slide active" id="ch0-s0">
+    <div class="slide-inner" style="position:relative;z-index:1">
+      <div class="big-bg">1</div>
+      <div class="tag-row"><span class="ch-tag">CHAPTER 01</span><span class="slide-tag">INTRO</span></div>
+      <h1 class="slide-title">Hello,<br><span class="hl">World</span> 🌍</h1>
+      <p class="desc">Variables, data types, arithmetic, errors and your first <code>print()</code>. The foundation of everything.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">print()</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">Variables</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">Arithmetic</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">Data Types</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">Errors</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 1: print() & Comments -->
+  <div class="slide" id="ch0-s1">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 01</span><span class="slide-tag">01 / 05</span></div>
+      <h2 class="slide-h2"><span class="hl">print()</span> & Comments</h2>
+      <p class="desc"><strong>print()</strong> outputs text, numbers or other info to the console. <strong>Comments</strong> start with <code>#</code> and are ignored by Python — use them to explain your code.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre><span class="cm"># This is a comment</span>
+<span class="fn">print</span>(<span class="str">"Hello World!"</span>)
+<span class="fn">print</span>(<span class="num">100</span>)
+
+pi = <span class="num">3.14159</span>
+<span class="fn">print</span>(pi)
+
+user = <span class="str">"JDoe"</span>  <span class="cm"># inline comment</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c0s1')">Run</button></div>
+            <textarea class="pg-in" id="c0s1-in" rows="4">print("Hello World!")
+print(42)
+# This line is a comment
+print("Python is fun")</textarea>
+            <div class="pg-out ph" id="c0s1-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">Which character starts a comment in Python?</p>
+              <div class="quiz-opts" id="qz-c0s1">
+                <button class="qopt" onclick="Q('qz-c0s1',this,'w')">//</button>
+                <button class="qopt" onclick="Q('qz-c0s1',this,'c')">#</button>
+                <button class="qopt" onclick="Q('qz-c0s1',this,'w')">--</button>
+                <button class="qopt" onclick="Q('qz-c0s1',this,'w')">/*</button>
+              </div>
+              <div class="quiz-fb" id="qz-c0s1-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 2: Variables & Data Types -->
+  <div class="slide" id="ch0-s2">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 01</span><span class="slide-tag">02 / 05</span></div>
+      <h2 class="slide-h2">Variables & <span class="hl">Data Types</span></h2>
+      <p class="desc">A <strong>variable</strong> stores a value using <code>=</code>. Python has several built-in types: <strong>int</strong>, <strong>float</strong>, <strong>str</strong>, <strong>bool</strong>.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>user_name  = <span class="str">"codey"</span>     <span class="cm"># str</span>
+user_id    = <span class="num">100</span>         <span class="cm"># int</span>
+verified   = <span class="bool">False</span>       <span class="cm"># bool</span>
+pi         = <span class="num">3.14159</span>     <span class="cm"># float</span>
+
+<span class="cm"># Update a variable anytime</span>
+points = <span class="num">100</span>
+points = <span class="num">120</span>
+
+<span class="cm"># += shortcut</span>
+counter  = <span class="num">0</span>
+counter += <span class="num">10</span>   <span class="cm"># counter is now 10</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c0s2')">Run</button></div>
+            <textarea class="pg-in" id="c0s2-in" rows="4">name = "Alice"
+age = 25
+score = 98.5
+print(name)
+print(age)
+print(score)</textarea>
+            <div class="pg-out ph" id="c0s2-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">What type is the value <code>3.14</code>?</p>
+              <div class="quiz-opts" id="qz-c0s2">
+                <button class="qopt" onclick="Q('qz-c0s2',this,'w')">int</button>
+                <button class="qopt" onclick="Q('qz-c0s2',this,'c')">float</button>
+                <button class="qopt" onclick="Q('qz-c0s2',this,'w')">str</button>
+                <button class="qopt" onclick="Q('qz-c0s2',this,'w')">bool</button>
+              </div>
+              <div class="quiz-fb" id="qz-c0s2-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 3: Arithmetic -->
+  <div class="slide" id="ch0-s3">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 01</span><span class="slide-tag">03 / 05</span></div>
+      <h2 class="slide-h2"><span class="hl">Arithmetic</span> Operators</h2>
+      <p class="desc">Python supports six primary arithmetic operators. They work on numbers and some work on strings too.</p>
+      <ul class="reveal-list" id="rv-c0s3">
+        <li class="reveal-item"><span class="bull">+</span><span>Addition — <code>10 + 30</code> → <strong>40</strong></span></li>
+        <li class="reveal-item"><span class="bull">-</span><span>Subtraction — <code>40 - 10</code> → <strong>30</strong></span></li>
+        <li class="reveal-item"><span class="bull">*</span><span>Multiplication — <code>50 * 5</code> → <strong>250</strong></span></li>
+        <li class="reveal-item"><span class="bull">/</span><span>Division — <code>16 / 4</code> → <strong>4.0</strong> (always float)</span></li>
+        <li class="reveal-item"><span class="bull">%</span><span>Modulo (remainder) — <code>25 % 2</code> → <strong>1</strong></span></li>
+        <li class="reveal-item"><span class="bull">**</span><span>Exponentiation — <code>5 ** 3</code> → <strong>125</strong></span></li>
+      </ul>
+      <div class="pg-wrap">
+        <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c0s3')">Run</button></div>
+        <textarea class="pg-in" id="c0s3-in" rows="3">print(10 + 3)
+print(10 % 3)
+print(2 ** 8)</textarea>
+        <div class="pg-out ph" id="c0s3-out">// output here</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 4: Errors -->
+  <div class="slide" id="ch0-s4">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 01</span><span class="slide-tag">04 / 05</span></div>
+      <h2 class="slide-h2">Common <span class="hl">Errors</span></h2>
+      <p class="desc">Python reports errors clearly. The three most common ones you'll see as a beginner:</p>
+      <div class="three-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">SYNTAXERROR</span></div>
+          <pre><span class="cm"># Incorrect syntax</span>
+age = <span class="num">7</span> + <span class="num">5</span> = <span class="num">4</span>
+<span class="cm"># SyntaxError!</span></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">NAMEERROR</span></div>
+          <pre><span class="cm"># Variable not defined</span>
+<span class="fn">print</span>(x)
+<span class="cm"># NameError!</span></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">TYPEERROR</span></div>
+          <pre><span class="cm"># Wrong types mixed</span>
+<span class="str">"hi"</span> + <span class="num">5</span>
+<span class="cm"># TypeError!</span></pre>
+        </div>
+      </div>
+      <div class="tip"><strong>💡 DEBUG TIP</strong> — Always read the last line of the error message first. It tells you exactly what went wrong.</div>
+      <div class="pg-wrap">
+        <div class="pg-head"><span class="pg-label">▶ TRY IT — trigger an error!</span><button class="run-btn" onclick="runPG('c0s4')">Run</button></div>
+        <textarea class="pg-in" id="c0s4-in" rows="2">print("Score: " + 100)</textarea>
+        <div class="pg-out ph" id="c0s4-out">// output here</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 5: Complete -->
+  <div class="slide" id="ch0-s5">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 01</span><span class="slide-tag">COMPLETE</span></div>
+      <h2 class="slide-h2">Chapter 1 <span class="hl">Done!</span></h2>
+      <div class="complete-card">
+        <div class="emoji">🎉</div>
+        <h3>Hello World — Complete</h3>
+        <p>You know: print(), comments, variables, data types, arithmetic operators, and common errors.<br><br>Press <strong>→</strong> to move on to Control Flow.</p>
+      </div>
+    </div>
+  </div>
+</div><!-- /ch-0 -->
+
+
+<!-- ══════════════════════════════════════════════════════
+     CHAPTER 2 — CONTROL FLOW
+══════════════════════════════════════════════════════ -->
+<div class="chapter" data-ch="1" id="ch-1">
+
+  <div class="slide active" id="ch1-s0">
+    <div class="slide-inner" style="position:relative;z-index:1">
+      <div class="big-bg">2</div>
+      <div class="tag-row"><span class="ch-tag">CHAPTER 02</span><span class="slide-tag">INTRO</span></div>
+      <h1 class="slide-title">Control<br><span class="hl">Flow</span> 🔀</h1>
+      <p class="desc">Make decisions in your code using <code>if</code>, <code>elif</code>, <code>else</code>. Compare values with operators and combine conditions with <code>and</code>, <code>or</code>, <code>not</code>.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">if / elif / else</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">Booleans</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">Comparison Operators</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">and / or / not</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch1-s1">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 02</span><span class="slide-tag">01 / 05</span></div>
+      <h2 class="slide-h2"><span class="hl">Boolean</span> Values</h2>
+      <p class="desc">Booleans have only two values: <code>True</code> or <code>False</code>. They are the <code>bool</code> type and drive all decision-making in Python.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>is_true  = <span class="bool">True</span>
+is_false = <span class="bool">False</span>
+
+<span class="fn">print</span>(<span class="fn">type</span>(is_true))
+<span class="cm"># &lt;class 'bool'&gt;</span>
+
+<span class="cm"># not flips the value</span>
+<span class="kw">not</span> <span class="bool">True</span>   <span class="cm"># False</span>
+<span class="kw">not</span> <span class="bool">False</span>  <span class="cm"># True</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c1s1')">Run</button></div>
+            <textarea class="pg-in" id="c1s1-in" rows="4">print(True)
+print(not True)
+print(not False)
+print(type(False))</textarea>
+            <div class="pg-out ph" id="c1s1-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">What does <code>not True</code> evaluate to?</p>
+              <div class="quiz-opts" id="qz-c1s1">
+                <button class="qopt" onclick="Q('qz-c1s1',this,'w')">True</button>
+                <button class="qopt" onclick="Q('qz-c1s1',this,'c')">False</button>
+                <button class="qopt" onclick="Q('qz-c1s1',this,'w')">None</button>
+                <button class="qopt" onclick="Q('qz-c1s1',this,'w')">0</button>
+              </div>
+              <div class="quiz-fb" id="qz-c1s1-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch1-s2">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 02</span><span class="slide-tag">02 / 05</span></div>
+      <h2 class="slide-h2">Comparison <span class="hl">Operators</span></h2>
+      <p class="desc">Compare two values. The result is always <code>True</code> or <code>False</code>. <strong>==</strong> checks equality, <strong>!=</strong> checks inequality.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>a = <span class="num">2</span>;  b = <span class="num">3</span>
+a <span class="op">&lt;</span>  b   <span class="cm"># True</span>
+a <span class="op">&gt;</span>  b   <span class="cm"># False</span>
+a <span class="op">&lt;=</span> b   <span class="cm"># True</span>
+a <span class="op">&gt;=</span> b   <span class="cm"># False</span>
+a <span class="op">==</span> b   <span class="cm"># False</span>
+a <span class="op">!=</span> b   <span class="cm"># True</span>
+
+<span class="cm"># Type matters: "2" != 2</span>
+<span class="str">'2'</span> <span class="op">==</span> <span class="num">2</span>  <span class="cm"># False</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c1s2')">Run</button></div>
+            <textarea class="pg-in" id="c1s2-in" rows="4">print(5 > 3)
+print(5 == 5)
+print("yes" == "no")
+print(10 != 9)</textarea>
+            <div class="pg-out ph" id="c1s2-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">What does <code>"2" == 2</code> return?</p>
+              <div class="quiz-opts" id="qz-c1s2">
+                <button class="qopt" onclick="Q('qz-c1s2',this,'w')">True</button>
+                <button class="qopt" onclick="Q('qz-c1s2',this,'c')">False</button>
+                <button class="qopt" onclick="Q('qz-c1s2',this,'w')">Error</button>
+                <button class="qopt" onclick="Q('qz-c1s2',this,'w')">2</button>
+              </div>
+              <div class="quiz-fb" id="qz-c1s2-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch1-s3">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 02</span><span class="slide-tag">03 / 05</span></div>
+      <h2 class="slide-h2"><span class="hl">if</span> / <span class="hl">else</span> Statements</h2>
+      <p class="desc">Run code <strong>only when</strong> a condition is <code>True</code>. Use <code>else</code> for the fallback when it's <code>False</code>. Indentation defines the block.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>val = <span class="num">50</span>
+<span class="kw">if</span> val <span class="op">&lt;</span> <span class="num">1</span>:
+    <span class="fn">print</span>(<span class="str">"Value is &lt; 1"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"Value is &gt;= 1"</span>)
+
+s = <span class="str">"VALID"</span>
+<span class="kw">if</span> s <span class="op">==</span> <span class="str">"NOT_VALID"</span>:
+    <span class="fn">print</span>(<span class="str">"Not valid"</span>)
+<span class="kw">else</span>:
+    <span class="fn">print</span>(<span class="str">"Something else"</span>)</pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c1s3')">Run</button></div>
+            <textarea class="pg-in" id="c1s3-in" rows="5">score = 75
+if score >= 60:
+    print("Pass!")
+else:
+    print("Fail!")</textarea>
+            <div class="pg-out ph" id="c1s3-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">If <code>x = 10</code>, what prints from <code>if x &gt; 5: print("A") else: print("B")</code>?</p>
+              <div class="quiz-opts" id="qz-c1s3">
+                <button class="qopt" onclick="Q('qz-c1s3',this,'c')">A</button>
+                <button class="qopt" onclick="Q('qz-c1s3',this,'w')">B</button>
+                <button class="qopt" onclick="Q('qz-c1s3',this,'w')">A and B</button>
+                <button class="qopt" onclick="Q('qz-c1s3',this,'w')">Nothing</button>
+              </div>
+              <div class="quiz-fb" id="qz-c1s3-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch1-s4">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 02</span><span class="slide-tag">04 / 05</span></div>
+      <h2 class="slide-h2"><span class="hl">elif</span> & Logical Operators</h2>
+      <p class="desc"><code>elif</code> adds more conditions after <code>if</code>. <code>and</code> requires both sides True. <code>or</code> requires at least one True.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>pet = <span class="str">"fish"</span>
+<span class="kw">if</span>   pet <span class="op">==</span> <span class="str">"dog"</span>:  <span class="fn">print</span>(<span class="str">"🐶"</span>)
+<span class="kw">elif</span> pet <span class="op">==</span> <span class="str">"cat"</span>:  <span class="fn">print</span>(<span class="str">"🐱"</span>)
+<span class="kw">elif</span> pet <span class="op">==</span> <span class="str">"fish"</span>: <span class="fn">print</span>(<span class="str">"🐟"</span>)
+<span class="kw">else</span>:               <span class="fn">print</span>(<span class="str">"❓"</span>)
+
+<span class="cm"># and / or</span>
+<span class="bool">True</span> <span class="kw">and</span> <span class="bool">False</span>  <span class="cm"># False</span>
+<span class="bool">True</span> <span class="kw">or</span>  <span class="bool">False</span>  <span class="cm"># True</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c1s4')">Run</button></div>
+            <textarea class="pg-in" id="c1s4-in" rows="6">age = 20
+has_id = True
+if age >= 18 and has_id:
+    print("Entry allowed")
+else:
+    print("Entry denied")</textarea>
+            <div class="pg-out ph" id="c1s4-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">What does <code>False or True</code> evaluate to?</p>
+              <div class="quiz-opts" id="qz-c1s4">
+                <button class="qopt" onclick="Q('qz-c1s4',this,'w')">False</button>
+                <button class="qopt" onclick="Q('qz-c1s4',this,'c')">True</button>
+                <button class="qopt" onclick="Q('qz-c1s4',this,'w')">None</button>
+                <button class="qopt" onclick="Q('qz-c1s4',this,'w')">Error</button>
+              </div>
+              <div class="quiz-fb" id="qz-c1s4-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch1-s5">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 02</span><span class="slide-tag">COMPLETE</span></div>
+      <h2 class="slide-h2">Chapter 2 <span class="hl">Done!</span></h2>
+      <div class="complete-card">
+        <div class="emoji">✅</div>
+        <h3>Control Flow — Complete</h3>
+        <p>You know: Booleans, comparison operators (==, !=, &lt;, &gt;), if/elif/else, and logical operators (and, or, not).<br><br>Press <strong>→</strong> to continue to Lists.</p>
+      </div>
+    </div>
+  </div>
+</div><!-- /ch-1 -->
+
+
+<!-- ══════════════════════════════════════════════════════
+     CHAPTER 3 — LISTS
+══════════════════════════════════════════════════════ -->
+<div class="chapter" data-ch="2" id="ch-2">
+
+  <div class="slide active" id="ch2-s0">
+    <div class="slide-inner" style="position:relative;z-index:1">
+      <div class="big-bg">3</div>
+      <div class="tag-row"><span class="ch-tag">CHAPTER 03</span><span class="slide-tag">INTRO</span></div>
+      <h1 class="slide-title">Lists<br><span class="hl">& Collections</span> 📋</h1>
+      <p class="desc">Store multiple values in one variable. Access, modify, add and remove items. Work with 2D lists.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">Creating Lists</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">Indexing</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">.append() / .remove()</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">2D Lists</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch2-s1">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 03</span><span class="slide-tag">01 / 05</span></div>
+      <h2 class="slide-h2">Creating & <span class="hl">Adding</span> Lists</h2>
+      <p class="desc">Lists use <strong>square brackets</strong> <code>[]</code>, items separated by commas. They can hold any mix of data types. Add two lists together with <code>+</code>.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>primes     = [<span class="num">2</span>, <span class="num">3</span>, <span class="num">5</span>, <span class="num">7</span>, <span class="num">11</span>]
+names      = [<span class="str">'Alice'</span>, <span class="str">'Bob'</span>]
+mixed      = [<span class="str">'hi'</span>, <span class="num">1</span>, <span class="bool">True</span>]
+empty_list = []
+
+<span class="cm"># Combine two lists with +</span>
+a = [<span class="str">'cake'</span>, <span class="str">'cookie'</span>]
+b = [<span class="str">'bread'</span>, <span class="str">'tart'</span>]
+<span class="fn">print</span>(a + b)
+<span class="cm"># ['cake','cookie','bread','tart']</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c2s1')">Run</button></div>
+            <textarea class="pg-in" id="c2s1-in" rows="4">fruits = ["apple", "banana"]
+vegs   = ["carrot", "pea"]
+print(fruits + vegs)
+print(len(fruits))</textarea>
+            <div class="pg-out ph" id="c2s1-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">What character(s) define a list in Python?</p>
+              <div class="quiz-opts" id="qz-c2s1">
+                <button class="qopt" onclick="Q('qz-c2s1',this,'w')">(  )</button>
+                <button class="qopt" onclick="Q('qz-c2s1',this,'c')">[  ]</button>
+                <button class="qopt" onclick="Q('qz-c2s1',this,'w'">{  }</button>
+                <button class="qopt" onclick="Q('qz-c2s1',this,'w')">&lt;  &gt;</button>
+              </div>
+              <div class="quiz-fb" id="qz-c2s1-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch2-s2">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 03</span><span class="slide-tag">02 / 05</span></div>
+      <h2 class="slide-h2">List <span class="hl">Indexing</span></h2>
+      <p class="desc">Access items by index (starts at <strong>0</strong>). Negative indexes count from the end. Slice with <code>[start:end]</code>.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>berries = [<span class="str">"blueberry"</span>,<span class="str">"cranberry"</span>,<span class="str">"raspberry"</span>]
+berries[<span class="num">0</span>]   <span class="cm"># "blueberry"</span>
+berries[<span class="num">2</span>]   <span class="cm"># "raspberry"</span>
+
+soups = [<span class="str">'minestrone'</span>,<span class="str">'lentil'</span>,<span class="str">'pho'</span>,<span class="str">'laksa'</span>]
+soups[<span class="op">-</span><span class="num">1</span>]    <span class="cm"># 'laksa'</span>
+soups[<span class="op">-</span><span class="num">3</span>:]   <span class="cm"># ['lentil','pho','laksa']</span>
+soups[:<span class="op">-</span><span class="num">2</span>]   <span class="cm"># ['minestrone','lentil']</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c2s2')">Run</button></div>
+            <textarea class="pg-in" id="c2s2-in" rows="4">colors = ["red","green","blue","yellow"]
+print(colors[0])
+print(colors[-1])
+print(colors[1:3])</textarea>
+            <div class="pg-out ph" id="c2s2-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">For <code>x = [10,20,30]</code>, what is <code>x[-1]</code>?</p>
+              <div class="quiz-opts" id="qz-c2s2">
+                <button class="qopt" onclick="Q('qz-c2s2',this,'w')">10</button>
+                <button class="qopt" onclick="Q('qz-c2s2',this,'w')">20</button>
+                <button class="qopt" onclick="Q('qz-c2s2',this,'c')">30</button>
+                <button class="qopt" onclick="Q('qz-c2s2',this,'w')">Error</button>
+              </div>
+              <div class="quiz-fb" id="qz-c2s2-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch2-s3">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 03</span><span class="slide-tag">03 / 05</span></div>
+      <h2 class="slide-h2"><span class="hl">.append()</span> & <span class="hl">.remove()</span></h2>
+      <p class="desc"><code>.append()</code> adds a new item to the <strong>end</strong> of a list. <code>.remove()</code> deletes the <strong>first occurrence</strong> of a value.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>orders = [<span class="str">'daisies'</span>, <span class="str">'periwinkle'</span>]
+orders.<span class="fn">append</span>(<span class="str">'tulips'</span>)
+<span class="fn">print</span>(orders)
+<span class="cm"># ['daisies','periwinkle','tulips']</span>
+
+line = [<span class="str">"Cole"</span>,<span class="str">"Kip"</span>,<span class="str">"Chris"</span>,<span class="str">"Chris"</span>]
+line.<span class="fn">remove</span>(<span class="str">"Chris"</span>)
+<span class="fn">print</span>(line)
+<span class="cm"># ["Cole","Kip","Chris"]</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c2s3')">Run</button></div>
+            <textarea class="pg-in" id="c2s3-in" rows="5">games = ["Mario", "Zelda"]
+games.append("Metroid")
+print(games)
+games.remove("Zelda")
+print(games)</textarea>
+            <div class="pg-out ph" id="c2s3-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">If <code>lst = [1,2,2,3]</code>, what does <code>lst.remove(2)</code> leave?</p>
+              <div class="quiz-opts" id="qz-c2s3">
+                <button class="qopt" onclick="Q('qz-c2s3',this,'w')">[1,3]</button>
+                <button class="qopt" onclick="Q('qz-c2s3',this,'c')">[1,2,3]</button>
+                <button class="qopt" onclick="Q('qz-c2s3',this,'w')">[1,2,2,3]</button>
+                <button class="qopt" onclick="Q('qz-c2s3',this,'w')">Error</button>
+              </div>
+              <div class="quiz-fb" id="qz-c2s3-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch2-s4">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 03</span><span class="slide-tag">04 / 05</span></div>
+      <h2 class="slide-h2"><span class="hl">2D Lists</span> — Lists inside Lists</h2>
+      <p class="desc">A <strong>2D list</strong> is a list that contains other lists. Use two indexes to access or modify any element: <code>list[row][column]</code>.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">ACCESSING</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>heights = [[<span class="str">"Noelle"</span>, <span class="num">61</span>],
+           [<span class="str">"Ali"</span>,    <span class="num">70</span>],
+           [<span class="str">"Sam"</span>,    <span class="num">67</span>]]
+
+<span class="cm"># Access: [row][col]</span>
+<span class="fn">print</span>(heights[<span class="num">0</span>][<span class="num">0</span>])  <span class="cm"># "Noelle"</span>
+<span class="fn">print</span>(heights[<span class="num">0</span>][<span class="num">1</span>])  <span class="cm"># 61</span>
+<span class="fn">print</span>(heights[<span class="num">2</span>][<span class="num">0</span>])  <span class="cm"># "Sam"</span></pre>
+        </div>
+        <div>
+          <div class="code-wrap">
+            <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">MODIFYING</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+            <pre>roster = [[<span class="str">"Jenny"</span>, <span class="str">"Breakdancing"</span>],
+          [<span class="str">"Alexus"</span>, <span class="str">"Photography"</span>],
+          [<span class="str">"Grace"</span>, <span class="str">"Soccer"</span>]]
+
+<span class="cm"># Change Jenny's hobby</span>
+roster[<span class="num">0</span>][<span class="num">1</span>] = <span class="str">"Meditation"</span>
+<span class="fn">print</span>(roster[<span class="num">0</span>])
+<span class="cm"># ["Jenny", "Meditation"]</span></pre>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">For <code>g = [["a","b"],["c","d"]]</code>, what is <code>g[1][0]</code>?</p>
+              <div class="quiz-opts" id="qz-c2s4">
+                <button class="qopt" onclick="Q('qz-c2s4',this,'w')">"a"</button>
+                <button class="qopt" onclick="Q('qz-c2s4',this,'w')">"b"</button>
+                <button class="qopt" onclick="Q('qz-c2s4',this,'c')">"c"</button>
+                <button class="qopt" onclick="Q('qz-c2s4',this,'w')">"d"</button>
+              </div>
+              <div class="quiz-fb" id="qz-c2s4-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="pg-wrap">
+        <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c2s4')">Run</button></div>
+        <textarea class="pg-in" id="c2s4-in" rows="5">grid = [["A","B","C"],["D","E","F"],["G","H","I"]]
+print(grid[0][0])
+print(grid[1][2])
+grid[2][1] = "X"
+print(grid[2])</textarea>
+        <div class="pg-out ph" id="c2s4-out">// output here</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch2-s5">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 03</span><span class="slide-tag">COMPLETE</span></div>
+      <h2 class="slide-h2">Chapter 3 <span class="hl">Done!</span></h2>
+      <div class="complete-card">
+        <div class="emoji">📋</div>
+        <h3>Lists — Complete</h3>
+        <p>You know: creating lists, indexing, negative indexes, slicing, .append(), .remove(), and 2D lists.<br><br>Press <strong>→</strong> to continue to Loops.</p>
+      </div>
+    </div>
+  </div>
+</div><!-- /ch-2 -->
+
+
+<!-- ══════════════════════════════════════════════════════
+     CHAPTER 4 — LOOPS
+══════════════════════════════════════════════════════ -->
+<div class="chapter" data-ch="3" id="ch-3">
+
+  <div class="slide active" id="ch3-s0">
+    <div class="slide-inner" style="position:relative;z-index:1">
+      <div class="big-bg">4</div>
+      <div class="tag-row"><span class="ch-tag">CHAPTER 04</span><span class="slide-tag">INTRO</span></div>
+      <h1 class="slide-title">Loops<br><span class="hl">& Iteration</span> 🔁</h1>
+      <p class="desc">Repeat code automatically with <code>for</code> and <code>while</code> loops. Control flow inside loops with <code>break</code> and <code>continue</code>.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">for loops</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">while loops</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">range()</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">break / continue</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">List Comprehension</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch3-s1">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 04</span><span class="slide-tag">01 / 05</span></div>
+      <h2 class="slide-h2"><span class="hl">for</span> Loops & range()</h2>
+      <p class="desc">A <code>for</code> loop iterates over a list or a <code>range()</code>. Each iteration assigns the current value to the loop variable.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>nums = [<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>,<span class="num">5</span>]
+<span class="kw">for</span> n <span class="kw">in</span> nums:
+    <span class="fn">print</span>(n)
+
+<span class="cm"># range(3) = 0, 1, 2</span>
+<span class="kw">for</span> i <span class="kw">in</span> <span class="fn">range</span>(<span class="num">3</span>):
+    <span class="fn">print</span>(<span class="str">"WARNING"</span>)</pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c3s1')">Run</button></div>
+            <textarea class="pg-in" id="c3s1-in" rows="5">for i in range(5):
+    print(i)
+
+for fruit in ["apple","banana","cherry"]:
+    print(fruit)</textarea>
+            <div class="pg-out ph" id="c3s1-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">How many times does <code>for i in range(4)</code> loop?</p>
+              <div class="quiz-opts" id="qz-c3s1">
+                <button class="qopt" onclick="Q('qz-c3s1',this,'w')">3</button>
+                <button class="qopt" onclick="Q('qz-c3s1',this,'c')">4</button>
+                <button class="qopt" onclick="Q('qz-c3s1',this,'w')">5</button>
+                <button class="qopt" onclick="Q('qz-c3s1',this,'w')">1</button>
+              </div>
+              <div class="quiz-fb" id="qz-c3s1-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch3-s2">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 04</span><span class="slide-tag">02 / 05</span></div>
+      <h2 class="slide-h2"><span class="hl">while</span> Loops</h2>
+      <p class="desc">A <code>while</code> loop keeps running as long as its condition is <code>True</code>. Always make sure the condition eventually becomes <code>False</code> to avoid an <strong>infinite loop</strong>!</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre><span class="cm"># Runs 5 times</span>
+i = <span class="num">1</span>
+<span class="kw">while</span> i <span class="op">&lt;</span> <span class="num">6</span>:
+    <span class="fn">print</span>(i)
+    i = i + <span class="num">1</span>
+
+<span class="cm"># Runs once (hungry set to False)</span>
+hungry = <span class="bool">True</span>
+<span class="kw">while</span> hungry:
+    <span class="fn">print</span>(<span class="str">"Time to eat!"</span>)
+    hungry = <span class="bool">False</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c3s2')">Run</button></div>
+            <textarea class="pg-in" id="c3s2-in" rows="4">count = 0
+while count < 4:
+    print("count:", count)
+    count += 1</textarea>
+            <div class="pg-out ph" id="c3s2-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">What causes an infinite loop?</p>
+              <div class="quiz-opts" id="qz-c3s2">
+                <button class="qopt" onclick="Q('qz-c3s2',this,'w')">Using range()</button>
+                <button class="qopt" onclick="Q('qz-c3s2',this,'c')">Condition never becomes False</button>
+                <button class="qopt" onclick="Q('qz-c3s2',this,'w')">Using break</button>
+                <button class="qopt" onclick="Q('qz-c3s2',this,'w')">Looping over a list</button>
+              </div>
+              <div class="quiz-fb" id="qz-c3s2-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch3-s3">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 04</span><span class="slide-tag">03 / 05</span></div>
+      <h2 class="slide-h2"><span class="hl">break</span> & <span class="hl">continue</span></h2>
+      <p class="desc"><code>break</code> exits the loop immediately. <code>continue</code> skips the rest of the current iteration and jumps to the next one.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">BREAK</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>nums = [<span class="num">0</span>, <span class="num">254</span>, <span class="num">2</span>, <span class="op">-</span><span class="num">1</span>, <span class="num">3</span>]
+<span class="kw">for</span> n <span class="kw">in</span> nums:
+    <span class="kw">if</span> n <span class="op">&lt;</span> <span class="num">0</span>:
+        <span class="fn">print</span>(<span class="str">"Negative!"</span>)
+        <span class="kw">break</span>
+    <span class="fn">print</span>(n)
+<span class="cm"># 0, 254, 2, Negative!</span></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">CONTINUE</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>big = [<span class="num">1</span>, <span class="num">2</span>, <span class="op">-</span><span class="num">1</span>, <span class="num">4</span>, <span class="op">-</span><span class="num">5</span>, <span class="num">5</span>]
+<span class="kw">for</span> i <span class="kw">in</span> big:
+    <span class="kw">if</span> i <span class="op">&lt;</span> <span class="num">0</span>:
+        <span class="kw">continue</span>
+    <span class="fn">print</span>(i)
+<span class="cm"># 1, 2, 4, 5</span></pre>
+        </div>
+      </div>
+      <div class="pg-wrap">
+        <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c3s3')">Run</button></div>
+        <textarea class="pg-in" id="c3s3-in" rows="4">for i in range(10):
+    if i == 5:
+        break
+    print(i)</textarea>
+        <div class="pg-out ph" id="c3s3-out">// output here</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch3-s4">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 04</span><span class="slide-tag">04 / 05</span></div>
+      <h2 class="slide-h2">Nested Loops & <span class="hl">Comprehension</span></h2>
+      <p class="desc"><strong>Nested loops</strong> loop inside loops — great for 2D data. <strong>List comprehensions</strong> create lists in one compact line.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">NESTED</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>groups = [[<span class="str">"Jobs"</span>,<span class="str">"Gates"</span>],
+          [<span class="str">"Newton"</span>,<span class="str">"Euler"</span>]]
+<span class="kw">for</span> group <span class="kw">in</span> groups:
+    <span class="kw">for</span> name <span class="kw">in</span> group:
+        <span class="fn">print</span>(name)</pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">COMPREHENSION</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre><span class="cm"># Squares of even numbers 0-9</span>
+result = [x**<span class="num">2</span> <span class="kw">for</span> x <span class="kw">in</span> <span class="fn">range</span>(<span class="num">10</span>)
+          <span class="kw">if</span> x % <span class="num">2</span> == <span class="num">0</span>]
+<span class="fn">print</span>(result)
+<span class="cm"># [0,4,16,36,64]</span></pre>
+        </div>
+      </div>
+      <div class="pg-wrap">
+        <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c3s4')">Run</button></div>
+        <textarea class="pg-in" id="c3s4-in" rows="3">squares = [x**2 for x in range(6)]
+print(squares)</textarea>
+        <div class="pg-out ph" id="c3s4-out">// output here</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch3-s5">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 04</span><span class="slide-tag">COMPLETE</span></div>
+      <h2 class="slide-h2">Chapter 4 <span class="hl">Done!</span></h2>
+      <div class="complete-card">
+        <div class="emoji">🔁</div>
+        <h3>Loops — Complete</h3>
+        <p>You know: for loops, while loops, range(), break, continue, nested loops and list comprehensions.<br><br>Press <strong>→</strong> to continue to Functions.</p>
+      </div>
+    </div>
+  </div>
+</div><!-- /ch-3 -->
+
+
+<!-- ══════════════════════════════════════════════════════
+     CHAPTER 5 — FUNCTIONS
+══════════════════════════════════════════════════════ -->
+<div class="chapter" data-ch="4" id="ch-4">
+
+  <div class="slide active" id="ch4-s0">
+    <div class="slide-inner" style="position:relative;z-index:1">
+      <div class="big-bg">5</div>
+      <div class="tag-row"><span class="ch-tag">CHAPTER 05</span><span class="slide-tag">INTRO</span></div>
+      <h1 class="slide-title">Functions<br><span class="hl">& Scope</span> ⚙️</h1>
+      <p class="desc">Write reusable blocks of code with <code>def</code>. Pass data in with parameters, get data back with <code>return</code>. Understand local vs global scope.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">def</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">Parameters</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">return</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">Scope</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch4-s1">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 05</span><span class="slide-tag">01 / 05</span></div>
+      <h2 class="slide-h2">Defining & <span class="hl">Calling</span> Functions</h2>
+      <p class="desc">Use <code>def</code> to define a function. Call it by writing its name with <code>()</code>. Indentation defines the function body.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre><span class="kw">def</span> <span class="fn">my_function</span>(x):
+    <span class="kw">return</span> x + <span class="num">1</span>
+
+<span class="fn">print</span>(<span class="fn">my_function</span>(<span class="num">2</span>))   <span class="cm"># 3</span>
+<span class="fn">print</span>(<span class="fn">my_function</span>(<span class="num">8</span>))   <span class="cm"># 9</span>
+
+<span class="kw">def</span> <span class="fn">greet</span>(name):
+    <span class="fn">print</span>(<span class="str">"Hello, "</span> + name)
+
+<span class="fn">greet</span>(<span class="str">"Alice"</span>)  <span class="cm"># Hello, Alice</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c4s1')">Run</button></div>
+            <textarea class="pg-in" id="c4s1-in" rows="5">def double(n):
+    return n * 2
+
+print(double(5))
+print(double(21))</textarea>
+            <div class="pg-out ph" id="c4s1-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">Which keyword defines a function in Python?</p>
+              <div class="quiz-opts" id="qz-c4s1">
+                <button class="qopt" onclick="Q('qz-c4s1',this,'w')">function</button>
+                <button class="qopt" onclick="Q('qz-c4s1',this,'w')">func</button>
+                <button class="qopt" onclick="Q('qz-c4s1',this,'c')">def</button>
+                <button class="qopt" onclick="Q('qz-c4s1',this,'w')">fn</button>
+              </div>
+              <div class="quiz-fb" id="qz-c4s1-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch4-s2">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 05</span><span class="slide-tag">02 / 05</span></div>
+      <h2 class="slide-h2">Parameters & <span class="hl">return</span></h2>
+      <p class="desc">Functions can take <strong>multiple parameters</strong> and return <strong>multiple values</strong>. Use <strong>keyword arguments</strong> with defaults so arguments can be passed in any order.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">MULTIPLE RETURN</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre><span class="kw">def</span> <span class="fn">square_point</span>(x, y):
+    <span class="kw">return</span> x*x, y*y
+
+a, b = <span class="fn">square_point</span>(<span class="num">3</span>, <span class="num">4</span>)
+<span class="fn">print</span>(a, b)  <span class="cm"># 9 16</span></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">KEYWORD ARGS</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre><span class="kw">def</span> <span class="fn">vol</span>(length=<span class="num">1</span>, width=<span class="num">1</span>, depth=<span class="num">1</span>):
+    <span class="kw">return</span> length * width * depth
+
+<span class="fn">vol</span>(<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>)
+<span class="fn">vol</span>(length=<span class="num">5</span>, depth=<span class="num">2</span>, width=<span class="num">4</span>)</pre>
+        </div>
+      </div>
+      <div class="pg-wrap">
+        <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c4s2')">Run</button></div>
+        <textarea class="pg-in" id="c4s2-in" rows="5">def add(a, b=10):
+    return a + b
+
+print(add(5))
+print(add(5, 20))</textarea>
+        <div class="pg-out ph" id="c4s2-out">// output here</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch4-s3">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 05</span><span class="slide-tag">03 / 05</span></div>
+      <h2 class="slide-h2">Variable <span class="hl">Scope</span></h2>
+      <p class="desc">A <strong>local variable</strong> only exists inside the function. A <strong>global variable</strong> is defined outside and accessible everywhere.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">LOCAL vs GLOBAL</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>a = <span class="num">5</span>         <span class="cm"># global</span>
+
+<span class="kw">def</span> <span class="fn">f1</span>():
+    a = <span class="num">2</span>     <span class="cm"># local — shadows global</span>
+    <span class="fn">print</span>(a)  <span class="cm"># 2</span>
+
+<span class="fn">print</span>(a)  <span class="cm"># 5 — global unchanged</span>
+<span class="fn">f1</span>()      <span class="cm"># 2</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c4s3')">Run</button></div>
+            <textarea class="pg-in" id="c4s3-in" rows="6">greeting = "Hello"
+
+def say_hi():
+    print(greeting)
+
+say_hi()
+print(greeting)</textarea>
+            <div class="pg-out ph" id="c4s3-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">A variable defined inside a function is called a…</p>
+              <div class="quiz-opts" id="qz-c4s3">
+                <button class="qopt" onclick="Q('qz-c4s3',this,'w')">global variable</button>
+                <button class="qopt" onclick="Q('qz-c4s3',this,'c')">local variable</button>
+                <button class="qopt" onclick="Q('qz-c4s3',this,'w')">parameter</button>
+                <button class="qopt" onclick="Q('qz-c4s3',this,'w')">constant</button>
+              </div>
+              <div class="quiz-fb" id="qz-c4s3-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch4-s4">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 05</span><span class="slide-tag">04 / 05</span></div>
+      <h2 class="slide-h2">Returning <span class="hl">Multiple Values</span></h2>
+      <p class="desc">A Python function can <code>return</code> more than one value by separating them with commas. The values come back as a group you can unpack into individual variables.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">MULTIPLE RETURN</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre><span class="kw">def</span> <span class="fn">square_point</span>(x, y, z):
+    x_sq = x * x
+    y_sq = y * y
+    z_sq = z * z
+    <span class="kw">return</span> x_sq, y_sq, z_sq
+
+a, b, c = <span class="fn">square_point</span>(<span class="num">3</span>, <span class="num">4</span>, <span class="num">5</span>)
+<span class="fn">print</span>(a)  <span class="cm"># 9</span>
+<span class="fn">print</span>(b)  <span class="cm"># 16</span>
+<span class="fn">print</span>(c)  <span class="cm"># 25</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c4s4')">Run</button></div>
+            <textarea class="pg-in" id="c4s4-in" rows="7">def min_max(numbers):
+    return min(numbers), max(numbers)
+
+lo, hi = min_max([3, 1, 9, 2, 7])
+print("Min:", lo)
+print("Max:", hi)</textarea>
+            <div class="pg-out ph" id="c4s4-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">How do you return two values from a function?</p>
+              <div class="quiz-opts" id="qz-c4s4">
+                <button class="qopt" onclick="Q('qz-c4s4',this,'w')">return [a, b]</button>
+                <button class="qopt" onclick="Q('qz-c4s4',this,'c')">return a, b</button>
+                <button class="qopt" onclick="Q('qz-c4s4',this,'w')">return(a)(b)</button>
+                <button class="qopt" onclick="Q('qz-c4s4',this,'w')">You can't</button>
+              </div>
+              <div class="quiz-fb" id="qz-c4s4-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="ch4-s5">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 05</span><span class="slide-tag">COMPLETE</span></div>
+      <h2 class="slide-h2">Chapter 5 <span class="hl">Done!</span></h2>
+      <div class="complete-card">
+        <div class="emoji">⚙️</div>
+        <h3>Functions — Complete</h3>
+        <p>You know: def, calling functions, parameters, return, multiple return values, keyword arguments, and scope (local/global).<br><br>Press <strong>→</strong> for the final chapter: Strings!</p>
+      </div>
+    </div>
+  </div>
+</div><!-- /ch-4 -->
+
+
+<!-- ══════════════════════════════════════════════════════
+     CHAPTER 6 — STRINGS (full 11-slide version)
+══════════════════════════════════════════════════════ -->
+<div class="chapter" data-ch="5" id="ch-5">
+
+  <!-- s0: Title -->
+  <div class="slide active" id="ch5-s0">
+    <div class="slide-inner" style="position:relative;z-index:1">
+      <div class="big-bg">6</div>
+      <div class="tag-row"><span class="ch-tag">CHAPTER 06</span><span class="slide-tag">INTRO</span></div>
+      <h1 class="slide-title">Python<br><span class="hl">Strings</span> 🔤</h1>
+      <p class="desc">11 concepts covering everything about strings — methods, indexing, slicing, formatting and iteration.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">Basics</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">Methods</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">Indexing & Slicing</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">.format()</span>
+        <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);border:1px solid var(--border2);padding:4px 12px;border-radius:100px">Iteration</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- s1: What is a String -->
+  <div class="slide" id="ch5-s1">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 06</span><span class="slide-tag">01 / 11</span></div>
+      <h2 class="slide-h2">What is a <span class="hl">String</span>?</h2>
+      <p class="desc">A <strong>string</strong> is a sequence of characters — letters, numbers, symbols, whitespace. Written inside <code>'single'</code> or <code>"double"</code> quotes. Strings are <strong>immutable</strong> — once created, they can't be changed in place.</p>
+      <ul class="reveal-list" id="rv-c5s1">
+        <li class="reveal-item"><span class="bull">→</span><span>Any length, any character: <code>"hello"</code>, <code>"42"</code>, <code>"hi! 🐍"</code></span></li>
+        <li class="reveal-item"><span class="bull">→</span><span><strong>Immutable</strong> — <code>.upper()</code> always returns a <em>new</em> string, never modifies the original</span></li>
+        <li class="reveal-item"><span class="bull">→</span><span>Check the type: <code>type("hello")</code> → <code>&lt;class 'str'&gt;</code></span></li>
+      </ul>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>name  = <span class="str">"Alice"</span>
+grade = <span class="str">'A+'</span>
+emoji = <span class="str">"learning 🐍"</span>
+
+<span class="fn">print</span>(<span class="fn">type</span>(name))  <span class="cm"># &lt;class 'str'&gt;</span>
+<span class="cm"># name[0] = "B"  ← TypeError!</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c5s1')">Run</button></div>
+            <textarea class="pg-in" id="c5s1-in" rows="3">name = "Python"
+print(type(name))
+print(len(name))</textarea>
+            <div class="pg-out ph" id="c5s1-out">// output here</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- s2: Concatenation & len -->
+  <div class="slide" id="ch5-s2">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 06</span><span class="slide-tag">02 / 11</span></div>
+      <h2 class="slide-h2">Concatenation & <span class="hl">len()</span></h2>
+      <p class="desc">Join strings with <code>+</code>. Count characters with <code>len()</code>.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>x = <span class="str">'One fish, '</span>
+y = <span class="str">'two fish.'</span>
+z = x + y
+<span class="fn">print</span>(z)        <span class="cm"># One fish, two fish.</span>
+<span class="fn">print</span>(<span class="fn">len</span>(z))   <span class="cm"># 19</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c5s2')">Run</button></div>
+            <textarea class="pg-in" id="c5s2-in" rows="4">first = "Hello"
+last  = "World"
+full  = first + ", " + last + "!"
+print(full)
+print(len(full))</textarea>
+            <div class="pg-out ph" id="c5s2-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">What does <code>len("hello")</code> return?</p>
+              <div class="quiz-opts" id="qz-c5s2">
+                <button class="qopt" onclick="Q('qz-c5s2',this,'w')">4</button>
+                <button class="qopt" onclick="Q('qz-c5s2',this,'c')">5</button>
+                <button class="qopt" onclick="Q('qz-c5s2',this,'w')">6</button>
+                <button class="qopt" onclick="Q('qz-c5s2',this,'w')">"hello"</button>
+              </div>
+              <div class="quiz-fb" id="qz-c5s2-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- s3: Escaping -->
+  <div class="slide" id="ch5-s3">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 06</span><span class="slide-tag">03 / 11</span></div>
+      <h2 class="slide-h2">Escaping <span class="hl">Characters</span></h2>
+      <p class="desc">Use a backslash <code>\</code> before special characters to include them literally. Common escapes: <code>\"</code> quote, <code>\n</code> newline, <code>\\</code> backslash.</p>
+      <ul class="reveal-list" id="rv-c5s3">
+        <li class="reveal-item"><span class="bull">\"</span><span>Escaped double quote inside a double-quoted string</span></li>
+        <li class="reveal-item"><span class="bull">\'</span><span>Escaped single quote inside a single-quoted string</span></li>
+        <li class="reveal-item"><span class="bull">\n</span><span>Newline — moves to the next line when printed</span></li>
+        <li class="reveal-item"><span class="bull">\\</span><span>A literal backslash character</span></li>
+      </ul>
+      <div class="pg-wrap">
+        <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c5s3')">Run</button></div>
+        <textarea class="pg-in" id="c5s3-in" rows="3">print("She said \"Never let go\".")
+print("Line 1\nLine 2\nLine 3")
+print("Path: C:\\Users\\Alice")</textarea>
+        <div class="pg-out ph" id="c5s3-out">// output here</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- s4: Case & Strip -->
+  <div class="slide" id="ch5-s4">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 06</span><span class="slide-tag">04 / 11</span></div>
+      <h2 class="slide-h2">.upper() · .lower() · <span class="hl">.title()</span> · .strip()</h2>
+      <p class="desc">Four methods to transform a string's appearance. Each returns a <em>new</em> string — the original is unchanged.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>s = <span class="str">"  hello world  "</span>
+s.<span class="fn">upper</span>()  <span class="cm"># "  HELLO WORLD  "</span>
+s.<span class="fn">lower</span>()  <span class="cm"># "  hello world  "</span>
+s.<span class="fn">title</span>()  <span class="cm"># "  Hello World  "</span>
+s.<span class="fn">strip</span>()  <span class="cm"># "hello world"</span>
+
+<span class="str">"...hi..."</span>.<span class="fn">strip</span>(<span class="str">'.'</span>)  <span class="cm"># "hi"</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c5s4')">Run</button></div>
+            <textarea class="pg-in" id="c5s4-in" rows="4">msg = "  the dark knight  "
+print(msg.strip())
+print(msg.strip().title())
+print(msg.strip().upper())</textarea>
+            <div class="pg-out ph" id="c5s4-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">What does <code>"dark knight".title()</code> return?</p>
+              <div class="quiz-opts" id="qz-c5s4">
+                <button class="qopt" onclick="Q('qz-c5s4',this,'w')">"DARK KNIGHT"</button>
+                <button class="qopt" onclick="Q('qz-c5s4',this,'c')">"Dark Knight"</button>
+                <button class="qopt" onclick="Q('qz-c5s4',this,'w')">"dark knight"</button>
+                <button class="qopt" onclick="Q('qz-c5s4',this,'w')">"Dark knight"</button>
+              </div>
+              <div class="quiz-fb" id="qz-c5s4-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- s5: find & replace -->
+  <div class="slide" id="ch5-s5">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 06</span><span class="slide-tag">05 / 11</span></div>
+      <h2 class="slide-h2"><span class="hl">.find()</span> & <span class="hl">.replace()</span></h2>
+      <p class="desc"><code>.find()</code> returns the index of the first match, or <strong>-1</strong> if not found. <code>.replace(old, new)</code> swaps every occurrence.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>m = <span class="str">"Mount Kilimanjaro"</span>
+m.<span class="fn">find</span>(<span class="str">"o"</span>)       <span class="cm"># 1</span>
+m.<span class="fn">find</span>(<span class="str">"xyz"</span>)     <span class="cm"># -1 (not found)</span>
+
+f = <span class="str">"Strawberry"</span>
+f.<span class="fn">replace</span>(<span class="str">'r'</span>,<span class="str">'R'</span>)
+<span class="cm"># "StRawbeRRy"</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c5s5')">Run</button></div>
+            <textarea class="pg-in" id="c5s5-in" rows="4">s = "I scream, you scream!"
+print(s.find("scream"))
+print(s.find("pizza"))
+print(s.replace("scream", "dream"))</textarea>
+            <div class="pg-out ph" id="c5s5-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">What does <code>"hello".find("z")</code> return?</p>
+              <div class="quiz-opts" id="qz-c5s5">
+                <button class="qopt" onclick="Q('qz-c5s5',this,'w')">0</button>
+                <button class="qopt" onclick="Q('qz-c5s5',this,'w')">False</button>
+                <button class="qopt" onclick="Q('qz-c5s5',this,'c')">-1</button>
+                <button class="qopt" onclick="Q('qz-c5s5',this,'w')">None</button>
+              </div>
+              <div class="quiz-fb" id="qz-c5s5-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- s6: split & join -->
+  <div class="slide" id="ch5-s6">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 06</span><span class="slide-tag">06 / 11</span></div>
+      <h2 class="slide-h2"><span class="hl">.split()</span> & <span class="hl">.join()</span></h2>
+      <p class="desc"><code>.split()</code> breaks a string into a list using a delimiter. <code>.join()</code> glues a list back into a string. They are inverses of each other.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre><span class="cm"># split → list</span>
+t = <span class="str">"Silicon Valley"</span>
+t.<span class="fn">split</span>()
+<span class="cm"># ['Silicon', 'Valley']</span>
+
+<span class="cm"># join → string (call on delimiter)</span>
+words = [<span class="str">"a"</span>, <span class="str">"b"</span>, <span class="str">"c"</span>]
+<span class="str">"-"</span>.<span class="fn">join</span>(words)  <span class="cm"># "a-b-c"</span></pre>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c5s6')">Run</button></div>
+            <textarea class="pg-in" id="c5s6-in" rows="4">csv = "Alice,30,Engineer"
+parts = csv.split(",")
+print(parts)
+print(" | ".join(parts))</textarea>
+            <div class="pg-out ph" id="c5s6-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">What does <code>" ".join(["a","b","c"])</code> return?</p>
+              <div class="quiz-opts" id="qz-c5s6">
+                <button class="qopt" onclick="Q('qz-c5s6',this,'w')">["a","b","c"]</button>
+                <button class="qopt" onclick="Q('qz-c5s6',this,'c')">"a b c"</button>
+                <button class="qopt" onclick="Q('qz-c5s6',this,'w')">"abc"</button>
+                <button class="qopt" onclick="Q('qz-c5s6',this,'w')">"a, b, c"</button>
+              </div>
+              <div class="quiz-fb" id="qz-c5s6-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- s7: Indexing & Slicing -->
+  <div class="slide" id="ch5-s7">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 06</span><span class="slide-tag">07 / 11</span></div>
+      <h2 class="slide-h2">Indexing & <span class="hl">Slicing</span></h2>
+      <p class="desc">Access characters with <code>[index]</code>. Extract substrings with <code>[start:end]</code>. Negative indexes count from the end. Click a character below!</p>
+      <div class="code-wrap" style="margin-bottom:12px">
+        <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+        <pre>s = <span class="str">'yellow'</span>   <span class="cm">#  y  e  l  l  o  w</span>
+            <span class="cm">#  0  1  2  3  4  5</span>
+            <span class="cm"># -6 -5 -4 -3 -2 -1</span>
+s[<span class="num">1</span>]    <span class="cm"># 'e'</span>    s[<span class="op">-</span><span class="num">1</span>]   <span class="cm"># 'w'</span>
+s[<span class="num">4</span>:<span class="num">6</span>]  <span class="cm"># 'ow'</span>   s[:<span class="num">4</span>]   <span class="cm"># 'yell'</span>
+s[<span class="op">-</span><span class="num">3</span>:]  <span class="cm"># 'low'</span>  s[::<span class="op">-</span><span class="num">1</span>] <span class="cm"># 'wolley'</span></pre>
+      </div>
+      <!-- interactive index visualiser -->
+      <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;">
+        <div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:10px;">CLICK A CHARACTER</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;" id="idx-boxes-6"></div>
+        <div style="font-family:'DM Mono',monospace;font-size:.78rem;color:var(--accent);min-height:18px;" id="idx-info-6">← click to see its index</div>
+      </div>
+      <div class="pg-wrap">
+        <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c5s7')">Run</button></div>
+        <textarea class="pg-in" id="c5s7-in" rows="4">w = "Python"
+print(w[0])
+print(w[-1])
+print(w[1:4])
+print(w[::-1])</textarea>
+        <div class="pg-out ph" id="c5s7-out">// output here</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- s8: in keyword -->
+  <div class="slide" id="ch5-s8">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 06</span><span class="slide-tag">08 / 11</span></div>
+      <h2 class="slide-h2">The <span class="hl">in</span> Keyword</h2>
+      <p class="desc">Use <code>in</code> to check if a character or substring exists in a string. Returns <code style="color:var(--green)">True</code> or <code style="color:#f87171">False</code>.</p>
+      <ul class="reveal-list" id="rv-c5s8">
+        <li class="reveal-item"><span class="bull">→</span><span><code>"l" in "hello"</code> → <strong style="color:var(--green)">True</strong> — 'l' appears at index 2 and 3</span></li>
+        <li class="reveal-item"><span class="bull">→</span><span><code>"x" in "hello"</code> → <strong style="color:#f87171">False</strong> — 'x' is not in "hello"</span></li>
+        <li class="reveal-item"><span class="bull">→</span><span><code>"Mario" in "Mario Kart"</code> → <strong style="color:var(--green)">True</strong> — works on full substrings too!</span></li>
+      </ul>
+      <div class="pg-wrap">
+        <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c5s8')">Run</button></div>
+        <textarea class="pg-in" id="c5s8-in" rows="3">phrase = "I love Python programming"
+print("Python" in phrase)
+print("Java" in phrase)</textarea>
+        <div class="pg-out ph" id="c5s8-out">// output here</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- s9: .format() -->
+  <div class="slide" id="ch5-s9">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 06</span><span class="slide-tag">09 / 11</span></div>
+      <h2 class="slide-h2">String <span class="hl">.format()</span></h2>
+      <p class="desc">Insert values into <code>{}</code> placeholders. Use positional or keyword arguments.</p>
+      <div class="two-col">
+        <div>
+          <div class="code-wrap">
+            <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">POSITIONAL</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+            <pre>msg = <span class="str">'Scored {} of {}.'</span>
+msg.<span class="fn">format</span>(<span class="num">3</span>, <span class="num">10</span>)
+<span class="cm"># 'Scored 3 of 10.'</span></pre>
+          </div>
+          <div class="code-wrap">
+            <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">KEYWORD</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+            <pre>msg = <span class="str">'{verb} a {noun}.'</span>
+msg.<span class="fn">format</span>(
+  verb=<span class="str">'tickled'</span>,
+  noun=<span class="str">'hamster'</span>)
+<span class="cm"># 'tickled a hamster.'</span></pre>
+          </div>
+        </div>
+        <div>
+          <div class="pg-wrap">
+            <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c5s9')">Run</button></div>
+            <textarea class="pg-in" id="c5s9-in" rows="4">name = "Alex"
+score = 95
+total = 100
+print("{} scored {} out of {}.".format(name, score, total))</textarea>
+            <div class="pg-out ph" id="c5s9-out">// output here</div>
+          </div>
+          <div class="quiz-wrap" style="margin-top:10px">
+            <div class="quiz-head">🧠 QUICK CHECK</div>
+            <div class="quiz-body">
+              <p class="quiz-q">What does <code>"I am {}.".format(20)</code> return?</p>
+              <div class="quiz-opts" id="qz-c5s9">
+                <button class="qopt" onclick="Q('qz-c5s9',this,'w')">"I am {}."</button>
+                <button class="qopt" onclick="Q('qz-c5s9',this,'c')">"I am 20."</button>
+                <button class="qopt" onclick="Q('qz-c5s9',this,'w')">20</button>
+                <button class="qopt" onclick="Q('qz-c5s9',this,'w')">Error</button>
+              </div>
+              <div class="quiz-fb" id="qz-c5s9-fb"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- s10: Iteration -->
+  <div class="slide" id="ch5-s10">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 06</span><span class="slide-tag">10 / 11</span></div>
+      <h2 class="slide-h2">Iterating a <span class="hl">String</span></h2>
+      <p class="desc">A string is a sequence — loop through it character by character with <code>for…in</code>.</p>
+      <div class="two-col">
+        <div class="code-wrap">
+          <div class="code-top"><div class="code-dots"><span></span><span></span><span></span></div><span class="code-label">PYTHON</span><button class="copy-btn" onclick="copyCode(this)">copy</button></div>
+          <pre>s = <span class="str">"hello"</span>
+<span class="kw">for</span> c <span class="kw">in</span> s:
+    <span class="fn">print</span>(c)
+<span class="cm"># h</span>
+<span class="cm"># e</span>
+<span class="cm"># l</span>
+<span class="cm"># l</span>
+<span class="cm"># o</span></pre>
+        </div>
+        <div class="pg-wrap">
+          <div class="pg-head"><span class="pg-label">▶ TRY IT</span><button class="run-btn" onclick="runPG('c5s10')">Run</button></div>
+          <textarea class="pg-in" id="c5s10-in" rows="6">word = "Python"
+vowels = "aeiouAEIOU"
+for char in word:
+    if char in vowels:
+        print(char + " <- vowel")
+    else:
+        print(char)</textarea>
+          <div class="pg-out ph" id="c5s10-out">// output here</div>
+        </div>
+      </div>
+      <div class="tip" style="margin-top:10px"><strong>💡 TIP</strong> — You can also use <code>for i, c in enumerate(s)</code> to get both the index and character at the same time.</div>
+    </div>
+  </div>
+
+  <!-- s11: Complete -->
+  <div class="slide" id="ch5-s11">
+    <div class="slide-inner">
+      <div class="tag-row"><span class="ch-tag">CH 06</span><span class="slide-tag">COMPLETE</span></div>
+      <h2 class="slide-h2">🏆 <span class="hl">All Done!</span></h2>
+      <div class="complete-card">
+        <div class="emoji">🎓</div>
+        <h3>Python Masterclass — Complete!</h3>
+        <p>You've covered all 6 chapters:<br><br>
+        <strong>01</strong> Hello World &nbsp;·&nbsp; <strong>02</strong> Control Flow &nbsp;·&nbsp; <strong>03</strong> Lists<br>
+        <strong>04</strong> Loops &nbsp;·&nbsp; <strong>05</strong> Functions &nbsp;·&nbsp; <strong>06</strong> Strings<br><br>
+        Use ← → to revisit any chapter. Use ↑ ↓ to navigate within chapters.</p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /ch-5 -->
+
+</div><!-- /deck -->
+
+<!-- ── NAV ── -->
+<div id="nav">
+  <button class="nav-btn" id="btn-up"   onclick="move('up')"   title="↑ Prev slide"  >↑</button>
+  <button class="nav-btn" id="btn-down" onclick="move('down')" title="↓ Next slide"  >↓</button>
+  <div class="nav-divider"></div>
+  <button class="nav-btn" id="btn-left"  onclick="move('left')"  title="← Prev chapter">←</button>
+  <div class="nav-label">Ch <span class="cur" id="nav-ch">1</span> · Slide <span class="cur" id="nav-sl">1</span></div>
+  <button class="nav-btn" id="btn-right" onclick="move('right')" title="→ Next chapter">→</button>
+</div>
+
+<!-- ── SIDE DOTS ── -->
+<div id="side-dots"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  DATA: chapter slide counts
+// ═══════════════════════════════════════════
+const CH_SLIDES = [5, 5, 5, 5, 5, 11]; // slides per chapter (excl title = s0)
+const NUM_CH = 6;
+
+// State
+let ch = 0, sl = 0;
+const revealDone = new Set();
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+function init() {
+  buildDots();
+  updateHUD();
+}
+
+function buildDots() {
+  const el = document.getElementById('side-dots');
+  el.innerHTML = '';
+  const count = CH_SLIDES[ch] + 1; // +1 for title slide
+  for (let i = 0; i <= CH_SLIDES[ch]; i++) {
+    const d = document.createElement('div');
+    d.className = 'sdot' + (i === sl ? ' active' : '');
+    d.onclick = () => goTo(ch, i);
+    el.appendChild(d);
+  }
+}
+
+// ═══════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════
+function move(dir) {
+  if (dir === 'down') {
+    if (sl < CH_SLIDES[ch]) goTo(ch, sl + 1);
+  } else if (dir === 'up') {
+    if (sl > 0) goTo(ch, sl - 1);
+  } else if (dir === 'right') {
+    if (ch < NUM_CH - 1) goTo(ch + 1, 0);
+  } else if (dir === 'left') {
+    if (ch > 0) goTo(ch - 1, 0);
+  }
+}
+
+function jumpChapter(c) { goTo(c, 0); }
+
+function goTo(newCh, newSl) {
+  const oldSlide = document.getElementById(`ch${ch}-s${sl}`);
+  const newChEl  = document.getElementById(`ch-${newCh}`);
+  const newSlide = document.getElementById(`ch${newCh}-s${newSl}`);
+  if (!newSlide) return;
+
+  // chapter transition
+  if (newCh !== ch) {
+    document.getElementById(`ch-${ch}`).classList.remove('visible');
+    newChEl.classList.add('visible');
+  }
+
+  // slide transition
+  const goingDown = (newCh > ch) || (newCh === ch && newSl > sl);
+  oldSlide.classList.add(goingDown ? 'exit-up' : 'exit-down');
+  oldSlide.classList.remove('active');
+  setTimeout(() => oldSlide.classList.remove('exit-up', 'exit-down'), 400);
+
+  newSlide.classList.remove('exit-up', 'exit-down', 'active');
+  newSlide.style.transform = goingDown ? 'translateY(40px)' : 'translateY(-40px)';
+  newSlide.style.opacity = '0';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    newSlide.style.transform = '';
+    newSlide.style.opacity = '';
+    newSlide.classList.add('active');
+  }));
+
+  ch = newCh; sl = newSl;
+  updateHUD();
+  triggerReveal();
+}
+
+// ═══════════════════════════════════════════
+//  HUD UPDATE
+// ═══════════════════════════════════════════
+function updateHUD() {
+  // chapter pills
+  document.querySelectorAll('.hud-ch').forEach((b, i) => {
+    b.classList.toggle('active', i === ch);
+  });
+  // slide info
+  document.getElementById('hud-slide-info').textContent =
+    `Ch ${ch+1} · Slide ${sl+1} of ${CH_SLIDES[ch]+1}`;
+  document.getElementById('nav-ch').textContent = ch + 1;
+  document.getElementById('nav-sl').textContent = sl + 1;
+  // nav buttons
+  document.getElementById('btn-up').disabled    = sl === 0;
+  document.getElementById('btn-down').disabled  = sl === CH_SLIDES[ch];
+  document.getElementById('btn-left').disabled  = ch === 0;
+  document.getElementById('btn-right').disabled = ch === NUM_CH - 1;
+  // dots
+  buildDots();
+  // CSS accent
+  document.documentElement.style.setProperty('--accent',
+    [`var(--c1)`,`var(--c2)`,`var(--c3)`,`var(--c4)`,`var(--c5)`,`var(--c6)`][ch]);
+}
+
+// ═══════════════════════════════════════════
+//  REVEAL ANIMATIONS
+// ═══════════════════════════════════════════
+const REVEAL_IDS = {
+  '0-3': 'rv-c0s3',
+  '5-1': 'rv-c5s1',
+  '5-3': 'rv-c5s3',
+  '5-8': 'rv-c5s8',
+};
+
+function triggerReveal() {
+  const key = `${ch}-${sl}`;
+  const id = REVEAL_IDS[key];
+  if (id && !revealDone.has(id)) {
+    revealDone.add(id);
+    document.querySelectorAll(`#${id} .reveal-item`).forEach((el, i) => {
+      setTimeout(() => el.classList.add('shown'), 100 + i * 150);
+    });
+  }
+  // Build index visualiser when reaching ch6 slide 7
+  if (ch === 5 && sl === 7) buildIdxViz6();
+}
+
+// ═══════════════════════════════════════════
+//  KEYBOARD
+// ═══════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  const tag = document.activeElement.tagName;
+  if (tag === 'TEXTAREA' || tag === 'INPUT') return;
+  if (e.key === 'ArrowDown'  || e.key === 'j') { e.preventDefault(); move('down');  }
+  if (e.key === 'ArrowUp'    || e.key === 'k') { e.preventDefault(); move('up');    }
+  if (e.key === 'ArrowRight' || e.key === 'l') { e.preventDefault(); move('right'); }
+  if (e.key === 'ArrowLeft'  || e.key === 'h') { e.preventDefault(); move('left');  }
+});
+
+// ═══════════════════════════════════════════
+//  QUIZ
+// ═══════════════════════════════════════════
+function Q(id, btn, result) {
+  document.querySelectorAll(`#${id} .qopt`).forEach(b => b.disabled = true);
+  btn.classList.add(result === 'c' ? 'correct' : 'wrong');
+  const fb = document.getElementById(`${id}-fb`);
+  fb.textContent = result === 'c' ? '✓ Correct!' : '✗ Not quite — review the example!';
+  fb.className   = 'quiz-fb ' + (result === 'c' ? 'ok' : 'bad');
+}
+
+// ═══════════════════════════════════════════
+//  COPY
+// ═══════════════════════════════════════════
+function copyCode(btn) {
+  const txt = btn.closest('.code-wrap').querySelector('pre').innerText;
+  navigator.clipboard.writeText(txt).then(() => {
+    btn.textContent = 'copied!'; btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 1800);
+  });
+}
+
+// ═══════════════════════════════════════════
+//  PYTHON SIMULATOR
+// ═══════════════════════════════════════════
+function runPG(id) {
+  const code  = document.getElementById(`${id}-in`).value;
+  const outEl = document.getElementById(`${id}-out`);
+  outEl.className = 'pg-out';
+  const r = simPy(code);
+  outEl.textContent = r.text || '(no output)';
+  if (r.error) outEl.classList.add('err');
+}
+
+function simPy(code) {
+  const lines = code.split('\n');
+  const out = []; let vars = {}; let err = false;
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
+    const line = raw.replace(/#.*/,'').trim();
+    if (!line) continue;
+    try {
+      // print
+      if (/^print\(/.test(line)) { out.push(String(ev(line.slice(6,-1), vars))); continue; }
+      // for loop
+      const forM = line.match(/^for\s+(\w+)\s+in\s+(.+):$/);
+      if (forM) {
+        const iter = ev(forM[2], vars);
+        const body = []; let j = i+1;
+        while (j < lines.length && /^(\s{4}|\t)/.test(lines[j])) { body.push(lines[j].replace(/^(\s{4}|\t)/,'')); j++; }
+        for (const item of (Array.isArray(iter) ? iter : String(iter).split(''))) {
+          vars[forM[1]] = item;
+          execBody(body, vars, out);
+        }
+        i = j - 1; continue;
+      }
+      // assignment with +=
+      const plusEq = line.match(/^(\w+)\s*\+=\s*(.+)$/);
+      if (plusEq) { vars[plusEq[1]] = ev(`${plusEq[1]} + ${plusEq[2]}`, vars); continue; }
+      // assignment
+      const assign = line.match(/^(\w+)\s*=\s*(.+)$/);
+      if (assign) { vars[assign[1]] = ev(assign[2], vars); continue; }
+    } catch(e) { out.push('⚠ ' + e.message); err = true; break; }
+  }
+  return { text: out.join('\n'), error: err };
+}
+
+function execBody(body, vars, out) {
+  let k = 0;
+  while (k < body.length) {
+    const bl = body[k].replace(/#.*/,'').trim();
+    if (!bl) { k++; continue; }
+    if (/^print\(/.test(bl)) { out.push(String(ev(bl.slice(6,-1), vars))); k++; continue; }
+    const ifM = bl.match(/^if\s+(.+):$/);
+    if (ifM) {
+      const cond = ev(ifM[1], vars); k++;
+      const ifBody = []; while (k < body.length && /^(\s{4}|\t)/.test(body[k])) { ifBody.push(body[k].replace(/^(\s{4}|\t)/,'')); k++; }
+      const elseBody = [];
+      if (k < body.length && /^else:/.test(body[k].trim())) { k++; while (k < body.length && /^(\s{4}|\t)/.test(body[k])) { elseBody.push(body[k].replace(/^(\s{4}|\t)/,'')); k++; } }
+      if (cond) execBody(ifBody, vars, out); else execBody(elseBody, vars, out);
+      continue;
+    }
+    k++;
+  }
+}
+
+function ev(expr, vars) {
+  expr = expr.trim();
+  // string literal
+  const strM = expr.match(/^(["'])([\s\S]*)\1$/);
+  if (strM) return strM[2].replace(/\\n/g,'\n').replace(/\\"/g,'"').replace(/\\'/g,"'").replace(/\\\\/g,'\\');
+  // number
+  if (/^-?\d+(\.\d+)?$/.test(expr)) return parseFloat(expr);
+  // bool
+  if (expr==='True') return true; if (expr==='False') return false; if (expr==='None') return null;
+  // list
+  if (expr.startsWith('[')) {
+    const inner = expr.slice(1,-1).trim();
+    return inner ? splitComma(inner).map(a=>ev(a.trim(),vars)) : [];
+  }
+  // tuple
+  if (expr.startsWith('(') && expr.endsWith(')')) {
+    const inner = expr.slice(1,-1).trim();
+    return inner ? splitComma(inner).map(a=>ev(a.trim(),vars)) : [];
+  }
+  // simple var
+  if (/^\w+$/.test(expr)) {
+    if (expr in vars) return vars[expr];
+    throw new Error(`NameError: '${expr}' not defined`);
+  }
+  // min() / max()
+  if (/^min\(/.test(expr)) { const v=ev(expr.slice(4,-1),vars); if(Array.isArray(v))return Math.min(...v); throw new Error('TypeError'); }
+  if (/^max\(/.test(expr)) { const v=ev(expr.slice(4,-1),vars); if(Array.isArray(v))return Math.max(...v); throw new Error('TypeError'); }
+  // type()
+  if (/^type\(/.test(expr)) {
+    const v = ev(expr.slice(5,-1), vars);
+    if (typeof v==='string') return "<class 'str'>";
+    if (typeof v==='boolean') return "<class 'bool'>";
+    if (typeof v==='number') return Number.isInteger(v)?"<class 'int'>":"<class 'float'>";
+    if (Array.isArray(v)) return "<class 'list'>";
+    return "<class 'object'>";
+  }
+  // len()
+  if (/^len\(/.test(expr)) {
+    const v = ev(expr.slice(4,-1), vars);
+    if (typeof v==='string'||Array.isArray(v)) return v.length;
+    throw new Error('TypeError: no len()');
+  }
+  // range()
+  if (/^range\(/.test(expr)) {
+    const args = splitComma(expr.slice(6,-1)).map(a=>parseInt(ev(a.trim(),vars)));
+    const [start, stop, step] = args.length===1 ? [0,args[0],1] : args.length===2 ? [...args,1] : args;
+    const arr = []; for (let i=start; i<stop; i+=step) arr.push(i); return arr;
+  }
+  // method calls
+  const mm = expr.match(/^(.+?)\.(\w+)\(([^)]*)\)$/);
+  if (mm) {
+    const obj = ev(mm[1], vars); const meth = mm[2];
+    const args = mm[3].trim() ? splitComma(mm[3]).map(a=>ev(a.trim(),vars)) : [];
+    if (typeof obj==='string') {
+      if (meth==='upper')   return obj.toUpperCase();
+      if (meth==='lower')   return obj.toLowerCase();
+      if (meth==='title')   return obj.replace(/\b\w/g,c=>c.toUpperCase()).replace(/\B\w/g,c=>c.toLowerCase());
+      if (meth==='strip')   return args[0] ? obj.replace(new RegExp(`^[${esc(args[0])}]+|[${esc(args[0])}]+$`,'g'),'') : obj.trim();
+      if (meth==='find')    return obj.indexOf(String(args[0]??''));
+      if (meth==='replace') return obj.split(String(args[0])).join(String(args[1]));
+      if (meth==='split')   return args.length ? obj.split(String(args[0])) : obj.split(/\s+/).filter(Boolean);
+      if (meth==='join')    return (Array.isArray(args[0])?args[0]:[]).join(obj);
+      if (meth==='format') {
+        let r=obj; let pi=0;
+        r = r.replace(/\{(\w*)\}/g, (_,k) => {
+          if (k===''||/^\d+$/.test(k)) { const i=k===''?pi++:+k; return args[i]!==undefined?args[i]:_; }
+          return _;
+        });
+        return r;
+      }
+      if (meth==='index')  return obj.indexOf(String(args[0]??''));
+      if (meth==='count')  return obj.split(String(args[0]??'')).length-1;
+      if (meth==='append'||meth==='remove') throw new Error("AttributeError: str has no "+meth);
+    }
+    if (Array.isArray(obj)) {
+      if (meth==='append') { obj.push(args[0]); return null; }
+      if (meth==='remove') { const idx=obj.indexOf(args[0]); if(idx>-1) obj.splice(idx,1); return null; }
+      if (meth==='join')   return obj.join(String(args[0]??''));
+    }
+    throw new Error(`AttributeError: no method '${meth}'`);
+  }
+  // subscript [...]
+  const subM = expr.match(/^(.+?)\[(.+?)\]$/);
+  if (subM) {
+    const obj = ev(subM[1], vars); const key = subM[2];
+    if (key.includes(':')) {
+      const parts = key.split(':');
+      const step = parts[2]!==undefined&&parts[2]!==''?parseInt(parts[2]):1;
+      if (typeof obj==='string') {
+        if (step===-1&&parts[0]===''&&(parts[1]===''||parts[1]===undefined)) return obj.split('').reverse().join('');
+        let s=parts[0]===''?0:parseInt(parts[0]); let e=parts[1]===''||parts[1]===undefined?obj.length:parseInt(parts[1]);
+        if(s<0)s=obj.length+s; if(e<0)e=obj.length+e; return obj.slice(s,e);
+      }
+      if (Array.isArray(obj)) {
+        let s=parts[0]===''?0:parseInt(parts[0]); let e=parts[1]===''||parts[1]===undefined?obj.length:parseInt(parts[1]);
+        if(s<0)s=obj.length+s; if(e<0)e=obj.length+e; return obj.slice(s,e);
+      }
+    }
+    let idx = parseInt(ev(key, vars));
+    if (typeof obj==='string') {
+      if(idx<0)idx=obj.length+idx;
+      if(idx<0||idx>=obj.length) throw new Error('IndexError: string index out of range');
+      return obj[idx];
+    }
+    if (Array.isArray(obj)) {
+      if(idx<0)idx=obj.length+idx;
+      if(idx<0||idx>=obj.length) throw new Error('IndexError: list index out of range');
+      return obj[idx];
+    }
+  }
+  // not
+  if (/^not\s/.test(expr)) return !ev(expr.slice(4),vars);
+  // in
+  const inM = expr.match(/^(.+?)\s+in\s+(.+)$/);
+  if (inM) {
+    const a=ev(inM[1],vars), b=ev(inM[2],vars);
+    if(typeof b==='string') return b.includes(String(a));
+    if(Array.isArray(b)) return b.includes(a);
+  }
+  // and / or
+  const andM = expr.match(/^(.+?)\s+and\s+(.+)$/);
+  if (andM) { const a=ev(andM[1],vars); return a ? ev(andM[2],vars) : a; }
+  const orM = expr.match(/^(.+?)\s+or\s+(.+)$/);
+  if (orM)  { const a=ev(orM[1],vars);  return a ? a : ev(orM[2],vars); }
+  // comparison
+  const cmpM = expr.match(/^(.+?)\s*(===|!==|==|!=|>=|<=|>|<)\s*(.+)$/);
+  if (cmpM) {
+    const a=ev(cmpM[1],vars), op=cmpM[2], b=ev(cmpM[3],vars);
+    if(op==='==') return a===b; if(op==='!=') return a!==b;
+    if(op==='>=') return a>=b;  if(op==='<=') return a<=b;
+    if(op==='>')  return a>b;   if(op==='<')  return a<b;
+  }
+  // arithmetic ** first
+  const powM = expr.match(/^(.+?)\s*\*\*\s*(.+)$/);
+  if (powM) return Math.pow(ev(powM[1],vars), ev(powM[2],vars));
+  // split on +/- outside quotes/brackets
+  const addParts = splitOp(expr, ['+','-']);
+  if (addParts.length > 1) {
+    let result = ev(addParts[0].v, vars);
+    for (let i=1;i<addParts.length;i++) {
+      const r = ev(addParts[i].v, vars);
+      if (addParts[i].op==='+') {
+        if (typeof result==='string'||typeof r==='string') result=String(result)+String(r);
+        else result+=r;
+      } else result-=r;
+    }
+    return result;
+  }
+  // * / %
+  const mulParts = splitOp(expr, ['*','/',  '%']);
+  if (mulParts.length > 1) {
+    let result = ev(mulParts[0].v, vars);
+    for (let i=1;i<mulParts.length;i++) {
+      const r=ev(mulParts[i].v, vars);
+      if (mulParts[i].op==='*') result*=r;
+      else if (mulParts[i].op==='/') result/=r;
+      else result%=r;
+    }
+    return result;
+  }
+  throw new Error('ParseError: ' + expr);
+}
+
+function esc(s) { return s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g,'\\$&'); }
+
+function splitComma(str) {
+  const parts=[]; let cur=''; let depth=0; let inQ=false; let q='';
+  for (const c of str) {
+    if ((c==='"'||c==="'")&&!inQ){inQ=true;q=c;cur+=c;}
+    else if (c===q&&inQ){inQ=false;cur+=c;}
+    else if (!inQ&&(c==='['||c==='(')) {depth++;cur+=c;}
+    else if (!inQ&&(c===']'||c===')')) {depth--;cur+=c;}
+    else if (!inQ&&depth===0&&c===','){parts.push(cur);cur='';}
+    else cur+=c;
+  }
+  parts.push(cur); return parts;
+}
+
+function splitOp(str, ops) {
+  const parts=[{v:'',op:null}]; let depth=0; let inQ=false; let q='';
+  for (let i=0;i<str.length;i++) {
+    const c=str[i];
+    if ((c==='"'||c==="'")&&!inQ){inQ=true;q=c;parts[parts.length-1].v+=c;}
+    else if (c===q&&inQ){inQ=false;parts[parts.length-1].v+=c;}
+    else if (!inQ&&(c==='['||c==='(')) {depth++;parts[parts.length-1].v+=c;}
+    else if (!inQ&&(c===']'||c===')')) {depth--;parts[parts.length-1].v+=c;}
+    else if (!inQ&&depth===0&&ops.includes(c)) {
+      if (c==='*'&&i+1<str.length&&str[i+1]==='*'){parts[parts.length-1].v+='**';i++;continue;}
+      parts.push({v:'',op:c});
+    }
+    else parts[parts.length-1].v+=c;
+  }
+  return parts.length>1?parts:[{v:str,op:null}];
+}
+
+// ═══════════════════════════════════════════
+//  INDEX VISUALISER (ch6 slide 7)
+// ═══════════════════════════════════════════
+let idxViz6Built = false;
+function buildIdxViz6() {
+  if (idxViz6Built) return;
+  idxViz6Built = true;
+  const word = 'yellow';
+  const container = document.getElementById('idx-boxes-6');
+  if (!container) return;
+  word.split('').forEach((ch2, i) => {
+    const box = document.createElement('div');
+    box.style.cssText = `display:flex;flex-direction:column;align-items:center;gap:3px;min-width:40px;padding:7px 6px;border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.02);`;
+    box.innerHTML = `<span style="font-family:'DM Mono',monospace;font-size:.9rem;color:var(--text)">${ch2}</span><span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--accent)">${i}</span><span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--muted)">${i-word.length}</span>`;
+    box.addEventListener('click', () => {
+      document.querySelectorAll('#idx-boxes-6 > div').forEach(b => b.style.borderColor = 'var(--border)');
+      box.style.borderColor = 'var(--accent)';
+      document.getElementById('idx-info-6').textContent = `s[${i}] = "${ch2}"   ·   s[${i-word.length}] = "${ch2}"   ·   s[${i}:${i+1}] = "${ch2}"`;
+    });
+    container.appendChild(box);
+  });
+}
+
+// ═══════════════════════════════════════════
+//  START
+// ═══════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
